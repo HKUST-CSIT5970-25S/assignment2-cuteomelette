@@ -49,21 +49,35 @@ public class BigramFrequencyStripes extends Configured implements Tool {
 		public void map(LongWritable key, Text value, Context context)
 				throws IOException, InterruptedException {
 			String line = ((Text) value).toString();
-			String[] words = line.trim().split("\\s+");
 
 			/*
 			 * TODO: Your implementation goes here.
 			 */
+			String cleanedLine = line
+					.replaceAll("[^a-zA-Z']", " ")
+					.toLowerCase()
+					.replaceAll("\\s+'|'\\s+", " ");
+
+			String[] words = cleanedLine.trim().split("\\s+");
+
 			for (int i = 0; i < words.length - 1; i++) {
-				String w1 = words[i];
-				String w2 = words[i + 1];
+				String w1 = cleanWord(words[i]);
+				String w2 = cleanWord(words[i + 1]);
 				
+				if (w1.isEmpty() || w2.isEmpty()) continue;
+
 				STRIPE.clear();
 				STRIPE.increment(w2, 1);
-				
 				KEY.set(w1);
 				context.write(KEY, STRIPE);
 			}
+		}
+		
+		private String cleanWord(String word) {
+			return word
+					.replaceAll("^[^a-z']*", "")
+					.replaceAll("[^a-z']*$", "")
+					.replaceAll("'{2,}", "'");
 		}
 	}
 
