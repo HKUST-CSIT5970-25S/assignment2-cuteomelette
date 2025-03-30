@@ -35,7 +35,9 @@ public class BigramFrequencyPairs extends Configured implements Tool {
 	private static final Logger LOG = Logger.getLogger(BigramFrequencyPairs.class);
 
 	/*
-	 * TODO: write your Mapper here.
+	 * Mapper:
+	 * emits <(leftWord, rightWord), 1>, to count the number of occurrences of a specific bigram
+	 * emits <(leftWord, *), 1>, to count the total number of leading words
 	 */
 	private static class MyMapper extends
 			Mapper<LongWritable, Text, PairOfStrings, IntWritable> {
@@ -75,7 +77,7 @@ public class BigramFrequencyPairs extends Configured implements Tool {
 	}
 
 	/*
-	 * TODO: Write your reducer here.
+	 * Reducer: Output the total number and relative frequency of the leading word
 	 */
 	private static class MyReducer extends
 			Reducer<PairOfStrings, IntWritable, PairOfStrings, FloatWritable> {
