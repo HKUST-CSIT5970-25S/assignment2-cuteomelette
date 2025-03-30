@@ -53,6 +53,16 @@ public class BigramFrequencyPairs extends Configured implements Tool {
 			/*
 			 * TODO: Your implementation goes here.
 			 */
+			for (int i = 0; i < words.length - 1; i++) {
+				String w1 = words[i];
+				String w2 = words[i + 1];
+				
+				BIGRAM.set(w1, w2);
+				context.write(BIGRAM, ONE);
+				
+				BIGRAM.set(w1, "*");
+				context.write(BIGRAM, ONE);
+			}
 		}
 	}
 
@@ -64,6 +74,8 @@ public class BigramFrequencyPairs extends Configured implements Tool {
 
 		// Reuse objects.
 		private final static FloatWritable VALUE = new FloatWritable();
+		private String currentLeft = "";
+		private double total = 0.0;
 
 		@Override
 		public void reduce(PairOfStrings key, Iterable<IntWritable> values,
@@ -71,6 +83,35 @@ public class BigramFrequencyPairs extends Configured implements Tool {
 			/*
 			 * TODO: Your implementation goes here.
 			 */
+			String left = key.getLeftElement();
+			String right = key.getRightElement();
+
+			if (!left.equals(currentLeft)) {
+				currentLeft = left;
+				total = 0.0;
+			}
+
+			if ("*".equals(right)) {
+				int sum = 0;
+				for (IntWritable val : values) {
+					sum += val.get();
+				}
+				total = sum;
+				
+				PairOfStrings outputKey = new PairOfStrings(left, "");
+				VALUE.set((float) total);
+				context.write(outputKey, VALUE);
+			} else {
+				int sum = 0;
+				for (IntWritable val : values) {
+					sum += val.get();
+				}
+				if (total > 0) {
+					float freq = (float) (sum / total);
+					VALUE.set(freq);
+					context.write(key, VALUE);
+				}
+			}
 		}
 	}
 	
@@ -84,6 +125,12 @@ public class BigramFrequencyPairs extends Configured implements Tool {
 			/*
 			 * TODO: Your implementation goes here.
 			 */
+			int sum = 0;
+			for (IntWritable val : values) {
+				sum += val.get();
+			}
+			SUM.set(sum);
+			context.write(key, SUM);
 		}
 	}
 
