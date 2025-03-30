@@ -43,13 +43,13 @@ public class CORPairs extends Configured implements Tool {
 	 */
 	private static class CORMapper1 extends
 			Mapper<LongWritable, Text, Text, IntWritable> {
-		private final static IntWritable countWritable = new IntWritable(1);
+        private final IntWritable countWritable = new IntWritable(1);
         private Text word = new Text();
 		
 		@Override
 		public void map(LongWritable key, Text value, Context context)
 				throws IOException, InterruptedException {
-			HashMap<String, Integer> word_set = new HashMap<String, Integer>();
+			HashMap<String, Integer> wordCounts = new HashMap<String, Integer>();
 			// Please use this tokenizer! DO NOT implement a tokenizer by yourself!
 			String clean_doc = value.toString().replaceAll("[^a-z A-Z]", " ");
 			StringTokenizer doc_tokenizer = new StringTokenizer(clean_doc);
@@ -59,7 +59,8 @@ public class CORPairs extends Configured implements Tool {
             while (doc_tokenizer.hasMoreTokens()) {
                 String token = doc_tokenizer.nextToken().trim();
                 if (!token.isEmpty()) {
-                    wordCounts.put(token, wordCounts.getOrDefault(token, 0) + 1);
+                    wordCounts.put(token, wordCounts.containsKey(token) ? 
+                        wordCounts.get(token) + 1 : 1);
                 }
             }
 
@@ -97,12 +98,12 @@ public class CORPairs extends Configured implements Tool {
 	 * TODO: Write your second-pass Mapper here.
 	 */
 	public static class CORPairsMapper2 extends Mapper<LongWritable, Text, PairOfStrings, IntWritable> {
-		private final static IntWritable one = new IntWritable(1);
+        private final IntWritable one = new IntWritable(1);
         private PairOfStrings pair = new PairOfStrings();
 		
 		@Override
 		protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-			Set<String> uniqueWords = new HashSet<>();
+			Set<String> uniqueWords = new HashSet<String>();
 			// Please use this tokenizer! DO NOT implement a tokenizer by yourself!
 			StringTokenizer doc_tokenizer = new StringTokenizer(value.toString().replaceAll("[^a-z A-Z]", " "));
 			/*
@@ -115,8 +116,8 @@ public class CORPairs extends Configured implements Tool {
                     uniqueWords.add(token);
                 }
             }
-
-            List<String> sortedWords = new ArrayList<>(uniqueWords);
+            
+            List<String> sortedWords = new ArrayList<String>(uniqueWords);
             Collections.sort(sortedWords);
             
             for (int i = 0; i < sortedWords.size(); i++) {
@@ -197,18 +198,19 @@ public class CORPairs extends Configured implements Tool {
 			/*
 			 * TODO: Your implementation goes here.
 			 */
-			int cooccurrence = 0;
+            int pairCount = 0;
             for (IntWritable val : values) {
-                cooccurrence += val.get();
+                pairCount += val.get();
             }
-
-            String wordA = key.getLeftElement();
-            String wordB = key.getRightElement();
-            Integer freqA = word_total_map.get(wordA);
-            Integer freqB = word_total_map.get(wordB);
-
+            
+            String a = key.getLeftElement();
+            String b = key.getRightElement();
+            
+            Integer freqA = word_total_map.get(a);
+            Integer freqB = word_total_map.get(b);
+            
             if (freqA != null && freqB != null && freqA > 0 && freqB > 0) {
-                double cor = (double) cooccurrence / (freqA * freqB);
+                double cor = (double) pairCount / (freqA * freqB);
                 corResult.set(cor);
                 context.write(key, corResult);
             }
