@@ -86,17 +86,20 @@ public class BigramFrequencyStripes extends Configured implements Tool {
 			 * TODO: Your implementation goes here.
 			 */
 			SUM_STRIPES.clear();
-
+			
 			for (HashMapStringIntWritable stripe : stripes) {
 				SUM_STRIPES.plus(stripe);
 			}
-			
-			int total = SUM_STRIPES.values().stream().mapToInt(Integer::valueOf).sum();
-			
+
+			int total = 0;
+			for (Integer count : SUM_STRIPES.values()) {
+				total += count;
+			}
+
 			BIGRAM.set(key.toString(), "");
 			FREQ.set(total);
 			context.write(BIGRAM, FREQ);
-			
+
 			for (Map.Entry<String, Integer> entry : SUM_STRIPES.entrySet()) {
 				String rightWord = entry.getKey();
 				float probability = entry.getValue() / (float) total;
